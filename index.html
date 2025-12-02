@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second-Hand Accordion Search Hub</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load marked.js for Markdown rendering of the Buyer's Guide -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Custom styling for aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .search-button {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .search-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+        #search-button:hover {
+            background-color: #ef4444; /* Brighter red on hover */
+        }
+        #guide-button:hover {
+            background-color: #4f46e5; /* Brighter indigo on hover */
+        }
+        .market-card {
+            transition: transform 0.1s ease;
+        }
+        .market-card:hover {
+            transform: scale(1.02);
+        }
+        .checkbox-container input:checked + .checkmark {
+            background-color: #ef4444; /* Match button color */
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
+    <div id="app" class="w-full max-w-4xl bg-white p-6 sm:p-10 rounded-xl shadow-2xl border-t-4 border-red-500">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 tracking-tight">
+                🪗 UK Accordion Search Hub
+            </h1>
+            <p class="mt-2 text-lg text-gray-500">
+                Find your next bellows buddy across the best online marketplaces.
+            </p>
+        </header>
+
+        <!-- Search Input Area -->
+        <div class="mb-8">
+            <!-- NEW EMAIL FIELD FOR ALERTS -->
+            <div class="mb-6">
+                <label for="email-input" class="block text-sm font-medium text-gray-700 mb-2">
+                    Optional: Email for Future Price/Stock Alerts
+                </label>
+                <input
+                    type="email"
+                    id="email-input"
+                    placeholder="Enter your email to register for alerts (e.g., alert@example.com)"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                />
+            </div>
+            
+            <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">
+                What accordion are you looking for? (e.g., Paolo Soprani 96 Bass)
+            </label>
+            <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+                <!-- Input Group (Input + Mic Button) -->
+                <div class="relative flex flex-grow">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Enter brand, model, or bass size..."
+                        class="flex-grow p-3 pr-12 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 shadow-sm"
+                    />
+                    <button
+                        id="mic-button"
+                        class="absolute right-0 top-0 h-full p-3 text-gray-500 hover:text-red-500 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
+                        title="Search by Voice"
+                    >
+                        <!-- Mic Icon (Lucide icon equivalent, as a simple SVG) -->
+                        <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button
+                        id="search-button"
+                        class="search-button bg-red-600 text-white font-semibold py-3 px-6 rounded-lg whitespace-nowrap hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                        Launch Searches
+                    </button>
+                    <!-- NEW LLM BUTTON -->
+                    <button
+                        id="guide-button"
+                        class="search-button bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg whitespace-nowrap hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center"
+                    >
+                        ✨ Generate Buyer's Guide
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- LLM Output Area -->
+        <div id="llm-output" class="mt-8">
+            <!-- Buyer's guide will be displayed here -->
+        </div>
+
+        <!-- Marketplace Selection -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+            Select Marketplaces to Search
+        </h2>
+        <div id="marketplace-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Marketplaces will be injected here by JavaScript -->
+        </div>
+
+        <!-- Error/Status Message -->
+        <div id="message-box" class="mt-8 p-4 bg-yellow-100 text-yellow-800 rounded-lg hidden">
+            Please enter a search query and select at least one marketplace.
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const emailInput = document.getElementById('email-input'); // NEW: Email input
+        const searchButton = document.getElementById('search-button');
+        const guideButton = document.getElementById('guide-button');
+        const marketplaceList = document.getElementById('marketplace-list');
+        const messageBox = document.getElementById('message-box');
+        const llmOutput = document.getElementById('llm-output');
+        
+        // LLM API Constants
+        const apiKey = ""; 
+        const LLM_MODEL = "gemini-2.5-flash-preview-09-2025";
+        const LLM_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`;
+        const MAX_RETRIES = 5;
+
+        // --- Voice Search Variables ---
+        const micButton = document.getElementById('mic-button');
+        const micIcon = document.getElementById('mic-icon');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const isSpeechSupported = !!SpeechRecognition;
+        let recognition;
+        let isListening = false;
+        // -----------------------------
+
+
+        // --- LLM API Call with Exponential Backoff ---
+        async function fetchWithBackoff(url, options, retries = 0) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries < MAX_RETRIES) {
+                    const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithBackoff(url, options, retries + 1);
+                }
+                throw new Error("API request failed after multiple retries: " + error.message);
+            }
+        }
+
+        async function generateGuide() {
+            const query = searchInput.value.trim();
+            llmOutput.innerHTML = '';
+            guideButton.disabled = true;
+            searchButton.disabled = true;
+            guideButton.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating Guide...';
+
+            if (!query) {
+                llmOutput.innerHTML = '<div class="p-4 bg-red-100 text-red-800 rounded-lg">Please enter a search query (e.g., "72 bass Titano") to get a tailored buyer\'s guide.</div>';
+                guideButton.disabled = false;
+                searchButton.disabled = false;
+                guideButton.innerHTML = '✨ Generate Buyer\'s Guide';
+                return;
+            }
+
+            const systemPrompt = `You are an expert accordion appraiser and buyer's consultant. Your task is to provide a comprehensive, concise guide (max 3 paragraphs) to someone looking to buy a used accordion based on the user's specific query. The guide must include:
+            1. A brief overview of the item (brand, model, or type).
+            2. 3-5 critical functional aspects to check (e.g., bellows compression, reed quality, keyboard action).
+            3. A realistic used price range estimate (in USD, GBP, or EUR if found) for a well-maintained model.
+            Format the output using Markdown for readability (bold, lists).`;
+
+            const userQuery = `Generate a buyer's guide for a used accordion matching this description: "${query}".`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            try {
+                const response = await fetchWithBackoff(LLM_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    
+                    // Use marked.js to convert markdown to HTML
+                    const generatedHtml = marked.parse(text);
+
+                    let sourceHtml = '';
+                    if (sources.length > 0) {
+                        sourceHtml = '<p class="text-xs text-gray-500 mt-4 mb-2 font-semibold">Sources Used for Grounding:</p><ul class="list-disc list-inside space-y-1 text-xs text-gray-600">';
+                        sources.slice(0, 3).forEach(s => {
+                            sourceHtml += `<li><a href="${s.uri}" target="_blank" class="text-blue-600 hover:underline">${s.title}</a></li>`;
+                        });
+                        sourceHtml += '</ul>';
+                    }
+
+                    llmOutput.innerHTML = `
+                        <div class="p-6 bg-indigo-50 border border-indigo-200 rounded-lg shadow-xl mb-8">
+                            <h3 class="text-xl font-bold text-indigo-700 mb-3 border-b border-indigo-300 pb-2">
+                                Accordion Buyer's Guide for: <span class="text-gray-800">${query}</span>
+                            </h3>
+                            <div class="prose max-w-none text-gray-700">
+                                ${generatedHtml}
+                            </div>
+                            ${sourceHtml}
+                        </div>
+                    `;
+                } else {
+                    llmOutput.innerHTML = '<div class="p-4 bg-red-100 text-red-800 rounded-lg">Sorry, I couldn\'t generate the guide. Please try a more specific query or check your connection.</div>';
+                }
+
+            } catch (error) {
+                console.error("LLM Generation Error:", error);
+                llmOutput.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An API error occurred. Please check the console for details.</div>`;
+            } finally {
+                guideButton.disabled = false;
+                searchButton.disabled = false;
+                guideButton.innerHTML = '✨ Generate Buyer\'s Guide';
+            }
+        }
+        // End of LLM API Call logic
+
+
+        // Define the major marketplaces and their search parameters
+        const marketplaces = [
+            // --- Primary Commercial Markets ---
+            {
+                id: 'reverb',
+                name: 'Reverb',
+                icon: 'https://placehold.co/40x40/FF7A00/FFFFFF?text=R',
+                description: 'Ideal for professional and vintage instruments.',
+                searchUrl: 'https://reverb.com/marketplace?query={query}&product_type=folk-instruments-and-accordions&condition=used'
+            },
+            {
+                id: 'ebay',
+                name: 'eBay',
+                icon: 'https://placehold.co/40x40/0078FF/FFFFFF?text=E',
+                description: 'Widest range of options, from parts to high-end.',
+                searchUrl: 'https://www.ebay.co.uk/sch/i.html?_nkw={query}&LH_ItemCondition=3000' // LH_ItemCondition=3000 means "Used"
+            },
+
+            // --- Specialist Dealers ---
+            {
+                id: 'fairdeal',
+                name: 'Fair Deal Accordions',
+                icon: 'https://placehold.co/40x40/059669/FFFFFF?text=F',
+                description: 'UK specialist offering repaired and guaranteed stock.',
+                searchUrl: 'https://www.fairdealaccordions.com/search-results.html?q={query}'
+            },
+            {
+                id: 'highland', 
+                name: 'Highland Accordions',
+                icon: 'https://placehold.co/40x40/5B21B6/FFFFFF?text=H', 
+                description: 'UK specialist. Links directly to their pre-owned instruments inventory.',
+                searchUrl: 'https://www.highlandaccordions.com/pre-owned' // Updated URL to direct category link
+            },
+            {
+                id: 'birmingham_centre', 
+                name: 'Accordion Centre Birmingham',
+                icon: 'https://placehold.co/40x40/DC2626/FFFFFF?text=BC', 
+                description: 'Midlands-based specialist for sales, repairs, and tuning. Links directly to their products.',
+                searchUrl: 'http://accordioncentre.com/acb/buying-and-selling/our-products/' // Direct link to category
+            },
+            {
+                id: 'zzmusic', 
+                name: 'ZZ Music',
+                icon: 'https://placehold.co/40x40/0E7490/FFFFFF?text=ZZ', 
+                description: 'UK specialist with a large selection of new and used accordions.',
+                // Using a common WooCommerce/WordPress search parameter targeting the accordion product category
+                searchUrl: 'https://zzmusic.uk/?s={query}&post_type=product&product_cat=accordions' 
+            },
+            {
+                id: 'johndouglas', 
+                name: 'John Douglas Accordions (Used)',
+                icon: 'https://placehold.co/40x40/3182CE/FFFFFF?text=JD', 
+                description: 'UK specialist. Links directly to their pre-owned inventory.',
+                searchUrl: 'http://www.johndouglasaccordions.com/used_accordions.html' // Direct link to category
+            },
+            {
+                id: 'scotland_accordions', 
+                name: 'Scotland Accordions (Piano)',
+                icon: 'https://placehold.co/40x40/6366F1/FFFFFF?text=SA', 
+                description: 'UK specialist. Links directly to their Piano Accordions inventory.',
+                searchUrl: 'https://scotlandaccordions.co.uk/Piano%20Accordions' // Direct link to category
+            },
+            {
+                id: 'boorinwood', 
+                name: 'Boorinwood Music (Piano)',
+                icon: 'https://placehold.co/40x40/65A30D/FFFFFF?text=BM', 
+                description: 'UK specialist. Links directly to their Piano Accordion inventory.',
+                searchUrl: 'https://boorinwoodmusic.com/index.php?id_category=37&controller=category' // Direct link to category
+            },
+            {
+                id: 'akkordeonfreund', 
+                name: 'Akkordeonfreund (DE)',
+                icon: 'https://placehold.co/40x40/4C72B0/FFFFFF?text=AF', 
+                description: 'German specialist classifieds/marketplace.',
+                searchUrl: 'https://www.akkordeonfreund.de/musical-instruments' // Direct link to category
+            },
+            {
+                id: 'accordion_co_uk', 
+                name: 'Accordions in Stock',
+                icon: 'https://placehold.co/40x40/4F46E5/FFFFFF?text=AS', 
+                description: 'UK specialist. Links directly to their in-stock inventory.',
+                searchUrl: 'https://www.accordion.co.uk/accordions-in-stock' // Direct link to category
+            },
+            {
+                id: 'petosa', 
+                name: 'Petosa Accordions (Used)',
+                icon: 'https://placehold.co/40x40/000000/FFFFFF?text=P',
+                description: 'US specialist. Links directly to their pre-owned inventory.',
+                searchUrl: 'https://petosa.com/collections/pre-owned-accordions' 
+            },
+            {
+                id: 'accordionshop',
+                name: 'The Accordion Shop (Pre-owned)',
+                icon: 'https://placehold.co/40x40/8B5CF6/FFFFFF?text=A',
+                description: 'Specialist dealer offering quality, guaranteed instruments.',
+                // Note: Direct search parameter is unreliable, links to category
+                searchUrl: 'https://theaccordionshop.co.uk/accordion-category/preowned-accordions/' 
+            },
+            {
+                id: 'hobgoblin',
+                name: 'Hobgoblin Music (Used)',
+                icon: 'https://placehold.co/40x40/3B82F6/FFFFFF?text=H',
+                description: 'Specialty folk music retailer with vetted used stock.',
+                // Note: Direct search parameter is unreliable, links to category
+                searchUrl: 'https://hobgoblin.com/secondhand-instruments/secondhand-free-reed-instruments/secondhand-accordions' 
+            },
+
+            // --- Specific Marketplaces & Forums ---
+            {
+                id: 'squeezebox',
+                name: 'Squeezebox Marketplace',
+                icon: 'https://placehold.co/40x40/10B981/FFFFFF?text=S',
+                description: 'Marketplace for melodeons, accordions, and concertinas.',
+                searchUrl: 'https://www.squeezeboxmarketplace.com/index.php?route=product/search&search={query}'
+            },
+            {
+                id: 'accordionlounge', 
+                name: 'Community Shared Resource',
+                icon: 'https://placehold.co/40x40/34D399/FFFFFF?text=CR', 
+                description: 'A direct link to a shared community resource or discussion.',
+                searchUrl: 'https://gemini.google.com/share/6fed0bb95d51' // Updated URL
+            },
+            {
+                id: 'reedlounge', 
+                name: 'Reed Lounge (Piano Accordions)',
+                icon: 'https://placehold.co/40x40/FBBF24/FFFFFF?text=R', 
+                description: 'Specialist dealer. Links directly to their Piano Accordion category.',
+                searchUrl: 'https://thereedlounge.com/collections/piano-accordion-1'
+            },
+            {
+                id: 'accordionists_info', 
+                name: 'Accordionists.info Forum',
+                icon: 'https://placehold.co/40x40/9D174D/FFFFFF?text=AI', 
+                description: 'Major international forum with a dedicated classifieds section.',
+                searchUrl: 'https://www.accordionists.info/forums/accordions-and-accessories-for-sale.23/' // Direct link to classifieds
+            },
+            
+            // --- Local & Broad Classifieds ---
+            {
+                id: 'gumtree',
+                name: 'Gumtree',
+                icon: 'https://placehold.co/40x40/5A6C2C/FFFFFF?text=G',
+                description: 'Good for local collection and classified ads.',
+                searchUrl: 'https://www.gumtree.com/search?q={query}&sellerType=private_and_trade'
+            },
+            {
+                id: 'classifieds',
+                name: 'Local Classifieds (via Google)',
+                icon: 'https://placehold.co/40x40/374151/FFFFFF?text=L',
+                description: 'Uses Google to search Facebook Marketplace, Craigslist, etc.',
+                searchUrl: 'https://www.google.com/search?q={query}+accordion+site:facebook.com/marketplace+OR+site:craigslist.org'
+            }
+        ];
+
+        // Function to create the marketplace cards
+        function renderMarketplaces() {
+            marketplaceList.innerHTML = ''; // Clear existing list
+            marketplaces.forEach(market => {
+                // Default selection for commercial, local, specialist, and forum sites
+                const defaultChecks = ['reverb', 'ebay', 'classifieds', 'highland', 'birmingham_centre', 'accordionlounge', 'reedlounge', 'petosa', 'zzmusic', 'accordion_co_uk', 'johndouglas', 'scotland_accordions', 'accordionists_info', 'boorinwood', 'akkordeonfreund'];
+                
+                // Check if the link goes to a direct category (where the search query is ignored)
+                // We assume if the URL does NOT contain the {query} placeholder, it's a direct link to a category page.
+                const isDirectLink = !market.searchUrl.includes('{query}');
+                
+                const checked = defaultChecks.includes(market.id) ? 'checked' : ''; 
+                
+                const cardHtml = `
+                    <div class="market-card flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-md">
+                        <img src="${market.icon}" alt="${market.name} icon" class="w-10 h-10 rounded-full mr-4 border border-red-300 onerror="this.onerror=null; this.src='https://placehold.co/40x40/374151/FFFFFF?text=${market.name.charAt(0)}'"/>
+                        <div class="flex-grow">
+                            <h3 class="text-md font-semibold text-gray-900">${market.name}</h3>
+                            <p class="text-xs text-gray-500">${market.description}</p>
+                            ${isDirectLink ? '<p class="text-xs text-red-500 font-medium mt-1">Note: This is a direct link and will ignore your search query.</p>' : ''}
+                        </div>
+                        <div class="ml-4 flex items-center">
+                            <label class="checkbox-container relative inline-flex items-center cursor-pointer">
+                                <input id="${market.id}" type="checkbox" value="" class="sr-only peer" ${checked}>
+                                <div class="checkmark w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-500"></div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+                marketplaceList.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // Search execution logic
+        function launchSearches() {
+            messageBox.classList.add('hidden');
+            llmOutput.innerHTML = ''; // Clear guide output when launching searches
+            const query = searchInput.value.trim();
+            const email = emailInput.value.trim(); // NEW: Get email
+            const selectedMarkets = marketplaces.filter(market => document.getElementById(market.id).checked);
+
+            if (!query) {
+                messageBox.textContent = "Please enter a search query (e.g., Hohner Panther) before launching searches.";
+                messageBox.classList.remove('hidden');
+                messageBox.classList.replace('bg-green-100', 'bg-yellow-100');
+                messageBox.classList.replace('text-green-800', 'text-yellow-800');
+                return;
+            }
+            
+            if (selectedMarkets.length === 0) {
+                 messageBox.textContent = "Please select at least one marketplace to search.";
+                messageBox.classList.remove('hidden');
+                messageBox.classList.replace('bg-green-100', 'bg-yellow-100');
+                messageBox.classList.replace('text-green-800', 'text-yellow-800');
+                return;
+            }
+
+            const encodedQuery = encodeURIComponent(query);
+
+            selectedMarkets.forEach(market => {
+                let finalUrl = market.searchUrl.replace('{query}', encodedQuery);
+
+                // For sites that link to a general category (where the search parameter is unreliable or non-existent)
+                if (!market.searchUrl.includes('{query}')) {
+                    // Open the category page, regardless of the query parameter
+                    window.open(market.searchUrl, '_blank');
+                } else {
+                    // Open the constructed search URL
+                    window.open(finalUrl, '_blank');
+                }
+            });
+
+            // Provide feedback to the user
+            let successMessage = `Launching ${selectedMarkets.length} search tabs for "${query}"! Please check your new browser windows.`;
+
+            // NEW: Add notification explanation if email is provided
+            if (email) {
+                 // In a real application, this is where the client-side would send data to a backend 
+                 // service (like Google Cloud Functions) to monitor the search criteria.
+                 successMessage += ` We have registered your search criteria (${query}) for monitoring. In a live application, this would trigger an email notification to <span class="font-bold">${email}</span> if new matching listings are found later.`;
+            }
+
+            messageBox.innerHTML = successMessage;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.replace('bg-yellow-100', 'bg-green-100');
+            messageBox.classList.replace('text-yellow-800', 'text-green-800');
+        }
+
+
+        // --- Voice Search Logic ---
+        function setupVoiceRecognition() {
+            if (isSpeechSupported) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    micIcon.classList.remove('text-gray-500', 'hover:text-red-500');
+                    micIcon.classList.add('text-red-600', 'animate-pulse');
+                    searchInput.placeholder = "Listening... Speak now.";
+                    searchButton.disabled = true;
+                    guideButton.disabled = true;
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    searchInput.value = transcript;
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    micIcon.classList.remove('text-red-600', 'animate-pulse');
+                    micIcon.classList.add('text-gray-500', 'hover:text-red-500');
+                    searchInput.placeholder = "Enter brand, model, or bass size...";
+                    searchButton.disabled = false;
+                    guideButton.disabled = false;
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event);
+                    messageBox.textContent = `Voice input error: ${event.error}. Ensure microphone access is allowed.`;
+                    messageBox.classList.remove('hidden');
+                    messageBox.classList.replace('bg-green-100', 'bg-yellow-100');
+                    messageBox.classList.replace('text-green-800', 'text-yellow-800');
+                    // Reset on error
+                    recognition.onend();
+                };
+
+                micButton.addEventListener('click', () => {
+                    if (isListening) {
+                        recognition.stop();
+                    } else {
+                        try {
+                            recognition.start();
+                            messageBox.classList.add('hidden'); // Clear previous messages
+                        } catch (e) {
+                            // If recognition is already active (rare), just ignore it.
+                            if (e.message !== 'Recognition has already started.') {
+                                console.error("Mic start failed:", e);
+                            }
+                        }
+                    }
+                });
+
+            } else {
+                // Disable the mic button if the browser doesn't support the API
+                micButton.disabled = true;
+                micButton.title = "Voice search not supported by this browser.";
+                micIcon.classList.remove('hover:text-red-500');
+                micIcon.classList.add('text-gray-400');
+            }
+        }
+        // ------------------------------------
+
+
+        // Initialize
+        window.onload = () => {
+            renderMarketplaces();
+            setupVoiceRecognition(); // Setup the new voice feature
+            searchButton.addEventListener('click', launchSearches);
+            guideButton.addEventListener('click', generateGuide);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    launchSearches();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
